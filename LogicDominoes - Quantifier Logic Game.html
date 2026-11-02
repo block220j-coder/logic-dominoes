@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<!-- saved from url=(0091)file:///C:/Users/block/Downloads/imagen/carpeta%201/Juego%20de%20l%C3%B3gica%20offline.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style>body {transition: opacity ease-in 0.2s; } 
+body[unresolved] {opacity: 0; display: block; overflow: hidden; position: relative; } 
+</style>
+  
+  <title>LogicDominoes - Quantifier Logic Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #f3f4f6;
+    }
+
+    /* Top Toolbar */
+    .toolbar {
+      padding: 12px 20px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    .rules-btn {
+      background-color: #4b5563;
+    }
+
+    .rules-btn:hover {
+      background-color: #374151;
+    }
+
+    .lang-btn {
+      background-color: #059669;
+    }
+
+    .lang-btn:hover {
+      background-color: #047857;
+    }
+
+    .info-text {
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    /* Main Game Layout */
+    .game-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Board Area (Drop Zone con la imagen de fondo y filtro translúcido) */
+    .board-container {
+      position: relative;
+      flex: 2;
+      overflow: auto;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      
+      /* Fondo con degradado y la imagen (cambia 'tu-imagen.jpg' por el nombre de tu archivo de imagen) */
+      background: linear-gradient(rgba(226, 232, 240, 0.9), rgba(226, 232, 240, 0.9)), url('tu-imagen.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      
+      border-bottom: 3px dashed #cbd5e1;
+    }
+
+    .board-placeholder {
+      color: #334155;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-style: italic;
+      margin-top: 20px;
+    }
+
+    /* Player Hand Area */
+    .hand-container {
+      flex: 1;
+      background-color: #ffffff;
+      padding: 20px;
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      align-items: center;
+      box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .hand-title {
+      font-weight: bold;
+      color: #334155;
+      margin-right: 10px;
+    }
+
+    /* SVG Overlay for Arrows */
+    .arrow-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Domino Tile Styling */
+    .domino-tile {
+      background: white;
+      border: 2px solid #1e293b;
+      border-radius: 8px;
+      width: 380px;
+      min-height: 65px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: flex;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.1s ease;
+      z-index: 2;
+    }
+
+    .domino-tile:active {
+      cursor: grabbing;
+    }
+
+    .domino-tile.on-board {
+      cursor: default;
+    }
+
+    .domino-half {
+      flex: 1;
+      padding: 12px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      font-weight: bold;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .domino-half:first-child {
+      border-right: 2px solid #cbd5e1;
+      background: #ffffff;
+    }
+
+    /* Modal Styling (Rules Popup) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: white;
+      width: 500px;
+      max-width: 90%;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      font-weight: bold;
+      color: #4b5563;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .modal-close-btn:hover {
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-bottom: 15px;
+    }
+
+    .modal-body {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-body ul {
+      padding-left: 20px;
+    }
+  </style>
+<script src="chrome-extension://liecbddmkiiihnedobmlmillhodjkdmb/js/recordConsoleEvents.js"></script></head>
+<body>
+
+  <!-- Top Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button id="dealBtn">Reiniciar / Nueva Mano</button>
+      <span class="info-text" id="infoText">🧩 ¡Arrastra fichas al tablero para armar la cadena lógica!</span>
+    </div>
+    <div class="toolbar-right">
+      <button id="langBtn" class="lang-btn">English 🌐</button>
+      <button id="rulesBtn" class="rules-btn">Reglas del Juego</button>
+    </div>
+  </div>
+
+  <!-- Main Game Layout -->
+  <div class="game-layout">
+    <!-- Board Area (Drop Zone) -->
+    <div class="board-container" id="boardContainer">
+      <div class="board-placeholder" id="boardPlaceholder" style="display: block;">Suelta tus fichas de dominó aquí para empezar a construir la cadena...</div>
+      <svg class="arrow-svg" id="svgCanvas" style="width: 1358px; height: 377px;">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"></polygon>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Player Hand Area -->
+    <div class="hand-container" id="handContainer"><span class="hand-title" id="handTitle">Tu Mano:</span><div class="domino-tile" draggable="true"><div class="domino-half">∀x (P(x) → Q(x))</div><div class="domino-half">Todos los P son Q</div></div><div class="domino-tile" draggable="true"><div class="domino-half">¬∃x (P(x) ∧ ¬Q(x))</div><div class="domino-half">No existe ningún P que no sea Q</div></div><div class="domino-tile" draggable="true"><div class="domino-half">Todos los P son Q</div><div class="domino-half">¬∃x (P(x) ∧ ¬Q(x))</div></div><div class="domino-tile" draggable="true"><div class="domino-half">No existe ningún P que no sea Q</div><div class="domino-half">∀x (¬P(x) ∨ Q(x))</div></div></div>
+  </div>
+
+  <!-- Rules Modal -->
+  <div class="modal-overlay" id="rulesModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="closeModalBtn">×</button>
+      <h2 class="modal-title" id="modalTitle">📖 ¿Cómo jugar al Dominó de Cuantificadores?</h2>
+      <div class="modal-body" id="modalBodyText">
+        <p id="mDesc">¡Bienvenido! Si estás aprendiendo lógica formal, este juego te ayudará a entender cómo se relacionan las fórmulas matemáticas con su lenguaje natural y sus equivalencias (como las Leyes de De Morgan).</p>
+        <ul>
+          <li id="r1"><strong>El Objetivo:</strong> Colocar todas las fichas de tu mano en el tablero formando una cadena continua y coherente.</li>
+          <li id="r2"><strong>Cómo conectar:</strong> Al igual que un dominó tradicional, el lado derecho de una ficha debe encajar exactamente con el lado izquierdo de la siguiente ficha (su traducción, significado o equivalencia lógica).</li>
+          <li id="r3"><strong>Cómo colocar fichas:</strong> Arrastra una ficha desde <em>Tu Mano</em> y suéltala en el <em>Tablero</em>.</li>
+          <li id="r4"><strong>Ganar la partida:</strong> Al colocar la última ficha, el sistema validará matemáticamente tu orden. Si la cadena es correcta, verás un mensaje de éxito y el juego se reiniciará. ¡A practicar!</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- DICTIONARY FOR TRANSLATIONS ---
+    const translations = {
+      es: {
+        dealBtn: "Reiniciar / Nueva Mano",
+        infoText: "🧩 ¡Arrastra fichas al tablero para armar la cadena lógica!",
+        langBtn: "English 🌐",
+        rulesBtn: "Reglas del Juego",
+        boardPlaceholder: "Suelta tus fichas de dominó aquí para empezar a construir la cadena...",
+        handTitle: "Tu Mano:",
+        modalTitle: "📖 ¿Cómo jugar al Dominó de Cuantificadores?",
+        mDesc: "¡Bienvenido! Si estás aprendiendo lógica formal, este juego te ayudará a entender cómo se relacionan las fórmulas matemáticas con su lenguaje natural y sus equivalencias (como las Leyes de De Morgan).",
+        r1: "<strong>El Objetivo:</strong> Colocar todas las fichas de tu mano en el tablero formando una cadena continua y coherente.",
+        r2: "<strong>Cómo conectar:</strong> Al igual que un dominó tradicional, el lado derecho de una ficha debe encajar exactamente con el lado izquierdo de la siguiente ficha (su traducción, significado o equivalencia lógica).",
+        r3: "<strong>Cómo colocar fichas:</strong> Arrastra una ficha desde <em>Tu Mano</em> y suéltala en el <em>Tablero</em>.",
+        r4: "<strong>Ganar la partida:</strong> Al colocar la última ficha, el sistema validará matemáticamente tu orden. Si la cadena es correcta, verás un mensaje de éxito y el juego se reiniciará. ¡A practicar!",
+        successMsg: "¡Correcto! Has completado la cadena lógica exitosamente.",
+        errorMsg: "La cadena lógica tiene un orden incorrecto. Inténtalo de nuevo."
+      },
+      en: {
+        dealBtn: "Restart / New Hand",
+        infoText: "🧩 Drag tiles to the board to build the logic chain!",
+        langBtn: "Español 🌐",
+        rulesBtn: "Game Rules",
+        boardPlaceholder: "Drop your domino tiles here to start building the chain...",
+        handTitle: "Your Hand:",
+        modalTitle: "📖 How to Play Quantifier Dominoes?",
+        mDesc: "Welcome! If you are learning formal logic, this game will help you understand how mathematical formulas relate to natural language and their equivalences (like De Morgan's Laws).",
+        r1: "<strong>The Objective:</strong> Place all tiles from your hand onto the board forming a continuous and coherent chain.",
+        r2: "<strong>How to Connect:</strong> Just like traditional dominoes, the right side of a tile must match the left side of the next tile (its translation, meaning, or logical equivalence).",
+        r3: "<strong>How to Place Tiles:</strong> Drag a tile from <em>Your Hand</em> and drop it onto the <em>Board</em>.",
+        r4: "<strong>Winning the Game:</strong> When placing the last tile, the system will mathematically validate your order. If the chain is correct, you will see a success message and the game will restart. Happy practicing!",
+        successMsg: "Correct! You have successfully completed the logic chain.",
+        errorMsg: "The logic chain has an incorrect order. Try again."
+      }
+    };
+
+    let currentLang = "es";
+
+    // --- DATABASE OF CHAINABLE LOGIC DOMINOES (Bilingual) ---
+    const logicDominoPool = [
+      { id: 1, left: "∀x (P(x) → Q(x))", rightEs: "Todos los P son Q", rightEn: "All P are Q" },
+      { id: 2, left: "Todos los P son Q", rightEs: "¬∃x (P(x) ∧ ¬Q(x))", rightEn: "¬∃x (P(x) ∧ ¬Q(x))" },
+      { id: 3, left: "¬∃x (P(x) ∧ ¬Q(x))", rightEs: "No existe ningún P que no sea Q", rightEn: "No P is non-Q" },
+      { id: 4, left: "No existe ningún P que no sea Q", rightEs: "∀x (¬P(x) ∨ Q(x))", rightEn: "∀x (¬P(x) ∨ Q(x))" }
+    ];
+
+    let playerHand = [];
+    let boardChain = [];
+
+    const boardContainer = document.getElementById("boardContainer");
+    const handContainer = document.getElementById("handContainer");
+    const svgCanvas = document.getElementById("svgCanvas");
+    const boardPlaceholder = document.getElementById("boardPlaceholder");
+    const dealBtn = document.getElementById("dealBtn");
+    const langBtn = document.getElementById("langBtn");
+
+    // Modal elements
+    const rulesBtn = document.getElementById("rulesBtn");
+    const rulesModal = document.getElementById("rulesModal");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    // --- LANGUAGE TOGGLE EVENT LISTENER ---
+    langBtn.addEventListener("click", () => {
+      currentLang = currentLang === "es" ? "en" : "es";
+      updateTexts();
+      renderHand();
+      renderBoard();
+    });
+
+    function updateTexts() {
+      const t = translations[currentLang];
+      dealBtn.textContent = t.dealBtn;
+      document.getElementById("infoText").textContent = t.infoText;
+      langBtn.textContent = t.langBtn;
+      rulesBtn.textContent = t.rulesBtn;
+      boardPlaceholder.textContent = t.boardPlaceholder;
+      document.getElementById("handTitle").textContent = t.handTitle;
+      document.getElementById("modalTitle").textContent = t.modalTitle;
+      document.getElementById("mDesc").textContent = t.mDesc;
+      document.getElementById("r1").innerHTML = t.r1;
+      document.getElementById("r2").innerHTML = t.r2;
+      document.getElementById("r3").innerHTML = t.r3;
+      document.getElementById("r4").innerHTML = t.r4;
+    }
+
+    // --- MODAL EVENT LISTENERS ---
+    rulesBtn.addEventListener("click", () => rulesModal.classList.add("active"));
+    closeModalBtn.addEventListener("click", () => rulesModal.classList.remove("active"));
+    rulesModal.addEventListener("click", (e) => {
+      if (e.target === rulesModal) rulesModal.classList.remove("active");
+    });
+
+    // --- INITIALIZE GAME HAND USING Math.random() ---
+    function dealNewHand() {
+      boardChain = [];
+      playerHand = [];
+      
+      const existingTiles = boardContainer.querySelectorAll(".domino-tile");
+      existingTiles.forEach(tile => tile.remove());
+      boardPlaceholder.style.display = "block";
+
+      const shuffled = [...logicDominoPool].sort(() => 0.5 - Math.random());
+      playerHand = shuffled;
+
+      renderHand();
+      drawArrows();
+    }
+
+    // --- RENDER PLAYER HAND ---
+    function renderHand() {
+      const handTitle = handContainer.querySelector(".hand-title");
+      handContainer.innerHTML = "";
+      handContainer.appendChild(handTitle);
+
+      playerHand.forEach((tileData, index) => {
+        const tileEl = createDominoElement(tileData, false);
+        
+        tileEl.draggable = true;
+        tileEl.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", index);
+        });
+
+        handContainer.appendChild(tileEl);
+      });
+    }
+
+    // --- CREATE DOMINO UI ELEMENT ---
+    function createDominoElement(data, isOnBoard) {
+      const nodeEl = document.createElement("div");
+      nodeEl.className = "domino-tile" + (isOnBoard ? " on-board" : "");
+
+      const leftHalf = document.createElement("div");
+      leftHalf.className = "domino-half";
+      leftHalf.textContent = data.left;
+
+      const rightHalf = document.createElement("div");
+      rightHalf.className = "domino-half";
+      rightHalf.textContent = currentLang === "es" ? data.rightEs : data.rightEn;
+
+      nodeEl.appendChild(leftHalf);
+      nodeEl.appendChild(rightHalf);
+      return nodeEl;
+    }
+
+    // --- BOARD DRAG AND DROP LISTENERS ---
+    boardContainer.addEventListener("dragover", (e) => e.preventDefault());
+
+    boardContainer.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const handIndex = e.dataTransfer.getData("text/plain");
+      if (handIndex !== "") {
+        const tileData = playerHand[handIndex];
+        
+        playerHand.splice(handIndex, 1);
+        boardChain.push(tileData);
+
+        boardPlaceholder.style.display = "none";
+
+        renderHand();
+        renderBoard();
+
+        if (playerHand.length === 0) {
+          evaluateGameCompletion();
+        }
+      }
+    });
+
+    // --- MATHEMATICAL BOOLEAN VALIDATOR FUNCTION ---
+    function evaluateGameCompletion() {
+      let isCorrect = true;
+
+      for (let i = 0; i < boardChain.length - 1; i++) {
+        if (boardChain[i].rightEs !== boardChain[i + 1].left) {
+          isCorrect = false;
+          break;
+        }
+      }
+
+      const t = translations[currentLang];
+      if (isCorrect) {
+        setTimeout(() => {
+          alert(t.successMsg);
+          location.reload();
+        }, 100);
+      } else {
+        setTimeout(() => {
+          alert(t.errorMsg);
+          location.reload();
+        }, 100);
+      }
+    }
+
+    // --- RENDER BOARD CHAIN ---
+    function renderBoard() {
+      const existingTiles = boardContainer.querySelectorAll(".domino-tile");
+      existingTiles.forEach(tile => tile.remove());
+
+      boardChain.forEach((tileData) => {
+        const tileEl = createDominoElement(tileData, true);
+        boardContainer.insertBefore(tileEl, svgCanvas);
+      });
+
+      drawArrows();
+    }
+
+    // --- DRAW CONNECTING ARROWS BETWEEN BOARD TILES ---
+    function drawArrows() {
+      svgCanvas.style.width = boardContainer.scrollWidth + "px";
+      svgCanvas.style.height = boardContainer.scrollHeight + "px";
+
+      const existingLines = svgCanvas.querySelectorAll("line");
+      existingLines.forEach(line => line.remove());
+
+      const boardTiles = boardContainer.querySelectorAll(".domino-tile");
+
+      for (let i = 0; i < boardTiles.length - 1; i++) {
+        const current = boardTiles[i];
+        const next = boardTiles[i + 1];
+
+        const containerRect = boardContainer.getBoundingClientRect();
+        const rect1 = current.getBoundingClientRect();
+        const rect2 = next.getBoundingClientRect();
+
+        const x1 = (rect1.left + rect1.right) / 2 - containerRect.left + boardContainer.scrollLeft;
+        const y1 = rect1.bottom - containerRect.top + boardContainer.scrollTop;
+
+        const x2 = (rect2.left + rect2.right) / 2 - containerRect.left + boardContainer.scrollLeft;
+        const y2 = rect2.top - containerRect.top + boardContainer.scrollTop;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "#2563eb");
+        line.setAttribute("stroke-width", "3");
+        line.setAttribute("marker-end", "url(#arrowhead)");
+
+        svgCanvas.appendChild(line);
+      }
+    }
+
+    dealBtn.addEventListener("click", dealNewHand);
+    window.addEventListener("resize", drawArrows);
+
+    // Initial deal on load
+    dealNewHand();
+  </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+</body></html>
